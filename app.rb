@@ -1,7 +1,4 @@
-# TODO display users on /all_users page
 # TODO add SQL instead of reading a txt file
-# TODO POST method for /users page
-
 
 require 'sinatra'
 require_relative './lib/usersclass'
@@ -9,6 +6,7 @@ require_relative './lib/usersclass'
 get('/users') do
   erb :index
 end
+
 get('/all-users') do
   @users = Array.new
     File.open("C:/Users/polty/Desktop/rub/ruby_site/lib/users.txt", "r") do |file|
@@ -19,4 +17,8 @@ get('/all-users') do
       end
     end
   erb :all_users
+end
+
+post('/save') do
+  @user = User.new(param["fname"], param["lname"], param["ysalary"])
 end

@@ -27,13 +27,13 @@
                     <tbody>
                             <% for user in @users %>
                                 <tr>
-                                    <td><%= user.fname %></td>
-                                    <td><%= user.lname %></td>
-                                    <td><%= user.ysalary %></td>
+                                    <td><%= user['fname'] %></td>
+                                    <td><%= user['lname'] %></td>
+                                    <td><%= user['ysalary'] %></td>
                                 </tr>
                             <% end %>
                     </tbody>
-                </table> 
+                </table>
             </div>
       </div>
   </body>

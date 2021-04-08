@@ -1,9 +1,10 @@
+#TODO json
+#TODO Repo -> User
 require 'socket'
 require_relative './classes.rb'
 
 server  = TCPServer.new('localhost', 8080)
 SERVER_ROOT = "./views"
-repo = Repository.new
 
 loop {
   client = server.accept
@@ -22,7 +23,7 @@ loop {
 
   when "/users"
     if method == "GET"
-      @users = repo.select_users()
+      @users = User.select_users()
       full_path = SERVER_ROOT + '/users.erb'
 
     elsif method == "POST"
@@ -32,8 +33,7 @@ loop {
         key, value = pair.split("=")
         content[key] = value
       end
-      @new_user = User.new(content["fname"], content["lname"], content["ysalary"].to_i)
-      repo.add_user(@new_user.fname, @new_user.lname, @new_user.ysalary)
+      User.add_user(content["fname"], content["lname"], content["ysalary"].to_i)
       full_path = SERVER_ROOT + '/new_user.erb'
 
     else
@@ -41,7 +41,7 @@ loop {
     end
 
   when /\/users\/%\d+/
-    @user = repo.select_users(path.scan(/\d+/)[0].to_i)
+    @user = User.select_users(path.scan(/\d+/)[0].to_i)
       if @user
         full_path = SERVER_ROOT + '/user.erb'
       else
@@ -50,8 +50,8 @@ loop {
 
   # pseudo delete
   when /\/users\?id=\d+$/
-    repo.delete_user(path.scan(/\d+/)[0].to_i)
-    @users = repo.select_users()
+    User.delete_user(path.scan(/\d+/)[0].to_i)
+    @users = User.select_users()
     full_path = SERVER_ROOT + '/users.erb'
 
   # pseudo put
@@ -73,10 +73,10 @@ loop {
         end
       end
     end
-    @user = repo.select_users(id)
+    @user = User.select_users(id)
     if @user
-      repo.update_user(id, command.join(", "))
-      @users = repo.select_users()
+      User.update_user(id, command.join(", "))
+      @users = User.select_users()
       full_path = SERVER_ROOT + '/users.erb'
     else
       full_path = SERVER_ROOT + '/no_user.erb'
@@ -86,7 +86,7 @@ loop {
   when /\/users\?sort_by=.+&order=.+$/
     sort_by = path.scan(/(?<=sort_by=).+(?=&)/)[0].to_s
     order = path.scan(/(?<=order=).+(?=$)/)[0].to_s
-    @users = repo.select_users(user_id=-1, order_by=sort_by, order=order)
+    @users = User.select_users(user_id=-1, order_by=sort_by, order=order)
     full_path = SERVER_ROOT + '/users.erb'
 
   when "/styles.css"

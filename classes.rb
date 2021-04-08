@@ -2,17 +2,28 @@ require 'pg'
 require 'erb'
 
 class User
-  attr_accessor :fname, :lname, :ysalary
-  def initialize(fname, lname, ysalary)
-    @fname = fname
-    @lname = lname
-    @ysalary = ysalary
-  end
+
+    def self.select_users(user_id=-1, order_by='ysalary', order='DESC')
+      Repository.select_users(user_id, order_by, order)
+    end
+
+    def self.update_user(id, command)
+      Repository.update_user(id, command)
+    end
+
+    def self.delete_user(id)
+      Repository.delete_user(id)
+    end
+
+    def self.add_user(fname, lname, ysalary)
+      Repository.add_user(fname, lname, ysalary)
+    end
+
 end
 
 class Repository
 
-  def open_connection
+  def self.open_connection
     begin
       @con = PG::Connection.open(:dbname => 'postgres', :user => 'postgres',
         :host => 'localhost', :port => '5432', :password => "Anna546372819!")
@@ -21,11 +32,11 @@ class Repository
     end
   end
 
-  def close_connection
+  def self.close_connection
     @con.close if @con
   end
 
-  def select_users(user_id=-1, order_by='ysalary', order='DESC')
+  def self.select_users(user_id=-1, order_by='ysalary', order='DESC')
     # return all users if user_id is not specified
     open_connection
     if user_id == -1
@@ -45,25 +56,25 @@ class Repository
       end
 
     end
-    close_connection
+    self.close_connection
   end
 
-  def add_user(fname, lname, ysalary)
-    open_connection
+  def self.add_user(fname, lname, ysalary)
+    self.open_connection
     @con.exec_params('INSERT INTO users (fname, lname, ysalary) VALUES ( $1, $2, $3 );', [fname, lname, ysalary])
-    close_connection
+    self.close_connection
   end
 
-  def delete_user(id)
-    open_connection
+  def self.delete_user(id)
+    self.open_connection
     @con.exec_params('DELETE FROM users WHERE id = $1;', [id])
-    close_connection
+    self.close_connection
   end
 
-  def update_user(id, command)
-    open_connection
+  def self.update_user(id, command)
+    self.open_connection
     @con.exec("UPDATE users SET #{command} WHERE id = #{id};")
-    close_connection
+    self.close_connection
   end
 
 end

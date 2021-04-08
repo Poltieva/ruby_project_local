@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link href="styles.css" rel="stylesheet">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+        <title>Add Employee</title>
+
+      </head>
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light bg-light border">
+         <a class="navbar-brand" href="/">Home</a>
+         <div class="collapse navbar-collapse" id="navbar">
+                 <ul class="navbar-nav mr-auto mt-2">
+                     <li class="nav-item"><a class="nav-link" href="/users">Show all users</a></li>
+                 </ul>
+         </div>
+     </nav>
+     <main>
+      <div>
+          <h1>Added new employee!</h1>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-sm">
+
+                    <thead>
+                        <tr>
+                            <th>First name</th>
+                            <th>Last name</th>
+                            <th>Year salary</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td><%= @new_user.fname %></td>
+                            <td><%= @new_user.lname %></td>
+                            <td><%= @new_user.ysalary %></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <form action="/" method="get">
+              <button class="btn btn-primary" type="submit">Go back to main</button>
+            </form><br />
+            <form action="/users" method="get">
+              <button class="btn btn-primary" type="submit">Show all users</button>
+            </form>
+      </div>
+      </main>
+  </body>
+</html>

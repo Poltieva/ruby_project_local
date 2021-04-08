@@ -73,10 +73,15 @@ loop {
         end
       end
     end
-    repo.update_user(id, command.join(", "))
+    @user = repo.select_users(id)
+    if @user
+      repo.update_user(id, command.join(", "))
+      @users = repo.select_users()
+      full_path = SERVER_ROOT + '/users.erb'
+    else
+      full_path = SERVER_ROOT + '/no_user.erb'
+    end
 
-    @users = repo.select_users()
-    full_path = SERVER_ROOT + '/users.erb'
 
   when /\/users\?sort_by=.+&order=.+$/
     sort_by = path.scan(/(?<=sort_by=).+(?=&)/)[0].to_s
@@ -86,10 +91,12 @@ loop {
 
   when "/styles.css"
     full_path = SERVER_ROOT + '/styles.css'
+
+  when "/users/styles.css"
+    full_path = SERVER_ROOT + '/styles.css'
   else
     full_path = ''
   end
-
 
   response = ResponseBuilder.new.respond_with(full_path)
 

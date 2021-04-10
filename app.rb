@@ -1,106 +1,92 @@
-#TODO json
-#TODO Repo -> User
 require 'socket'
-require_relative './classes.rb'
+require 'json'
+require_relative './response_class.rb'
+require_relative './request_class.rb'
+require_relative './user_class.rb'
 
 server  = TCPServer.new('localhost', 8080)
 SERVER_ROOT = "./views"
 
 loop {
   client = server.accept
-  method, path = client.gets.split
-  path.chomp!("?")
+  request = client.readpartial(2048)
 
-  headers = {}
-  while line = client.gets.split(' ', 2)
-    break if line[0] == ""
-    headers[line[0].chop] = line[1].strip
-  end
+  request = RequestParser.new.parse(request)
 
-  case path
-  when "/"
-    full_path = SERVER_ROOT + "/index.html"
+  method = request.fetch(:method)
+  path = request.fetch(:path)
 
-  when "/users"
-    if method == "GET"
-      @users = User.select_users()
-      full_path = SERVER_ROOT + '/users.erb'
+  if method == "GET" and path == "/"
+    code = 200
+    data = SERVER_ROOT + "/index.html"
+    content_type = "text/html"
 
-    elsif method == "POST"
-      data = client.read(headers["Content-Length"].to_i)  # Read the POST data as specified in the header
-      content = {}
-      for pair in data.split("&")
-        key, value = pair.split("=")
-        content[key] = value
-      end
-      User.add_user(content["fname"], content["lname"], content["ysalary"].to_i)
-      full_path = SERVER_ROOT + '/new_user.erb'
-
+  elsif method == "GET" and path == "/users"
+    code = 200
+    content_type = "application/json"
+    if request.fetch(:params)
+      sort_by = request[:params].key?(:sort_by) ? request[:params][:sort_by] : 'ysalary'
+      order = request[:params].key?(:order) ? request[:params][:order] : 'DESC'
+      data = User.select_users(-1, sort_by, order)
     else
-      full_path = ''
+      data = User.select_users()
     end
 
-  when /\/users\/%\d+/
-    @user = User.select_users(path.scan(/\d+/)[0].to_i)
-      if @user
-        full_path = SERVER_ROOT + '/user.erb'
-      else
-        full_path = SERVER_ROOT + '/no_user.erb'
-      end
+  elsif method == "POST" and path == "/users"
+    data = User.add_user(request[:body][:fname], request[:body][:lname], request[:body][:ysalary])
+    code = 201
+    content_type = 'application/json'
+  elsif method == "DELETE" and path =~ /\/users\/\d+/
+    id = request[:body][:id].to_i
+    data = User.delete_user(id)
+    if not data
+      code = 404
+      content_type = nil
+    else
+      code = 200
+      content_type = "application/json"
+    end
 
-  # pseudo delete
-  when /\/users\?id=\d+$/
-    User.delete_user(path.scan(/\d+/)[0].to_i)
-    @users = User.select_users()
-    full_path = SERVER_ROOT + '/users.erb'
 
-  # pseudo put
-  when /\/users\?id=\d+&fname=.*&lname=.*&ysalary=.*$/
-    info = path.split("?")[1].split("&")
-    id = 0
+  elsif method == "PUT" and path =~ /\/users\/\d+/
+    id = request[:body][:id].to_i
     command = []
-    for el in info
-      key, value = el.split("=")
-      if key.end_with? "name"
-        if value
-          command << "#{key} = '#{value}'"
-        end
-      else
-        if key == "id"
-          id = value.to_i
-        elsif value
-          command << "#{key} = #{value}"
-        end
-      end
-    end
-    @user = User.select_users(id)
-    if @user
-      User.update_user(id, command.join(", "))
-      @users = User.select_users()
-      full_path = SERVER_ROOT + '/users.erb'
+    request[:body][:fname] == '' ? '' : command << "fname = '" + request[:body][:fname] + "'"
+    request[:body][:lname] == '' ? '' : command << "lname = '" + request[:body][:lname] + "'"
+    request[:body][:ysalary] == '' ? '' : command << "ysalary = " + request[:body][:ysalary]
+    data = User.update_user(id, command.join(", "))
+    if data
+      code = 200
+      content_type = 'application/json'
     else
-      full_path = SERVER_ROOT + '/no_user.erb'
+      code = 404
+      content_type = nil
     end
 
+  elsif method == "GET" and path == "/form-for-delete"
+    code = 200
+    data = SERVER_ROOT + "/delete_form.html"
+    content_type = "text/html"
 
-  when /\/users\?sort_by=.+&order=.+$/
-    sort_by = path.scan(/(?<=sort_by=).+(?=&)/)[0].to_s
-    order = path.scan(/(?<=order=).+(?=$)/)[0].to_s
-    @users = User.select_users(user_id=-1, order_by=sort_by, order=order)
-    full_path = SERVER_ROOT + '/users.erb'
+  elsif method == "GET" and path == "/form-for-update"
+    code = 200
+    data = SERVER_ROOT + "/put_form.html"
+    content_type = "text/html"
 
-  when "/styles.css"
-    full_path = SERVER_ROOT + '/styles.css'
+  elsif method == "GET" and path == "/styles.css"
+    code = 200
+    data = SERVER_ROOT + "/styles.css"
+    content_type = "text/css"
 
-  when "/users/styles.css"
-    full_path = SERVER_ROOT + '/styles.css'
   else
-    full_path = ''
+    code = 404
+    data = nil
+    content_type = nil
   end
 
-  response = ResponseBuilder.new.respond_with(full_path)
+  response = ResponseBuilder.new.respond_with(code, data, content_type)
 
-  puts "#{client.peeraddr[3]} #{path} - #{response.code}"
+  puts "#{client.peeraddr[3]} #{request.fetch(:path)} - #{response.code}"
   response.send(client)
   client.close
 }

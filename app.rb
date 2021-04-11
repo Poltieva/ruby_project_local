@@ -4,18 +4,7 @@ require_relative './response_class.rb'
 require_relative './request_class.rb'
 require_relative './user_class.rb'
 
-server  = TCPServer.new('localhost', 8080)
-SERVER_ROOT = "./views"
-
-loop {
-  client = server.accept
-  request = client.readpartial(2048)
-
-  request = RequestParser.new.parse(request)
-
-  method = request.fetch(:method)
-  path = request.fetch(:path)
-
+def get_code_data_ctype(method, path, request)
   if method == "GET" and path == "/"
     code = 200
     data = SERVER_ROOT + "/index.html"
@@ -36,6 +25,18 @@ loop {
     data = User.add_user(request[:body][:fname], request[:body][:lname], request[:body][:ysalary])
     code = 201
     content_type = 'application/json'
+
+  elsif method == "GET" and path =~ /\/users\/\d+/
+    id = path.scan(/\d+/)[0].to_i
+    data = User.select_users(id)
+    if data
+      code = 200
+      content_type = 'application/json'
+    else
+      code = 404
+      content_type = nil
+    end
+
   elsif method == "DELETE" and path =~ /\/users\/\d+/
     id = request[:body][:id].to_i
     data = User.delete_user(id)
@@ -83,6 +84,23 @@ loop {
     data = nil
     content_type = nil
   end
+  return code, data, content_type
+end
+
+
+server  = TCPServer.new('localhost', 8080)
+SERVER_ROOT = "./views"
+
+loop {
+  client = server.accept
+  request = client.readpartial(2048)
+
+  request = RequestParser.new.parse(request)
+
+  method = request.fetch(:method)
+  path = request.fetch(:path)
+
+  code, data, content_type = get_code_data_ctype(method, path, request)
 
   response = ResponseBuilder.new.respond_with(code, data, content_type)
 

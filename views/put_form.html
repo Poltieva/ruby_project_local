@@ -16,7 +16,6 @@
          <a class="navbar-brand" href="/">Home</a>
          <div class="collapse navbar-collapse" id="navbar">
                  <ul class="navbar-nav mr-auto mt-2">
-                     <li class="nav-item"><a class="nav-link" href="/users">Show all users</a></li>
                      <li class="nav-item"><a class="nav-link" href="/delete-form">Delete user</a></li>
                      <li class="nav-item"><a class="nav-link" href="/put-form">Update user</a></li>
                  </ul>
@@ -54,10 +53,11 @@
           const ysalary = $('#ysalary').val();
 
           $.ajax({
-            url: '/users'  + id,
+            url: '/users/' + id,
             type: 'PUT',
             dataType: 'json',
-            data: JSON.stringify({ id, fname, lname, ysalary })
+            data: JSON.stringify({ id, fname, lname, ysalary }),
+            success: alert("Updated user with id: " + id)
           });
         })
       </script>

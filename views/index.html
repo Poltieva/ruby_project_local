@@ -16,8 +16,6 @@
          <a class="navbar-brand" href="/">Home</a>
          <div class="collapse navbar-collapse" id="navbar">
                  <ul class="navbar-nav mr-auto mt-2">
-                     <li class="nav-item"><a class="nav-link" href="/users">Show all users</a></li>
-                     <li class="nav-item"><a class="nav-link" href="/form-for-create">Create user</a></li>
                      <li class="nav-item"><a class="nav-link" href="/form-for-delete">Delete user</a></li>
                      <li class="nav-item"><a class="nav-link" href="/form-for-update">Update user</a></li>
                  </ul>
@@ -39,9 +37,64 @@
                   <button class="btn btn-primary" type="submit">Save user</button>
               </form>
           </div>
+          <p> </p>
+          <form>
+            <button class="btn btn-primary" id="load-users">Show all</button> Sort by:
+            <div>
+              <input type="radio" id="contactChoice1"
+               name="sort_by" value="ysalary" checked>
+              <label for="contactChoice1">Salary</label>
+
+              <input type="radio" id="contactChoice2"
+               name="sort_by" value="lname">
+              <label for="contactChoice2">Last name</label>
+
+              <input type="radio" id="contactChoice3"
+               name="sort_by" value="id">
+              <label for="contactChoice3">ID</label>
+            </div>
+            <div>
+              <input type="radio" id="orderChoice1"
+               name="order" value="ASC">
+              <label for="orderChoice1">Ascending</label>
+
+              <input type="radio" id="orderChoice2"
+               name="order" value="DESC" checked>
+              <label for="orderChoice2">Descending</label>
+            </div>
+          </form>
+          <div class="table-responsive" id="tablediv">
+            <table class='table table-striped table-sm'>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First name</th>
+                        <th>Last name</th>
+                        <th>Year salary</th>
+                    </tr>
+                </thead>
+                <tbody id='tbody'>
+          </div>
       </main>
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
       <script>
+
+        function loadUsers() {
+          var sort_by = $("input[type='radio'][name='sort_by']:checked").val();
+          var order = $("input[type='radio'][name='order']:checked").val();
+          var xmlhttp = new XMLHttpRequest();
+          var url = "/users?sort_by=" + sort_by + "&order=" + order;
+
+          xmlhttp.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                  var myArr = JSON.parse(this.responseText);
+                  myFunction(myArr);
+              }
+          };
+          xmlhttp.open("GET", url, true);
+          xmlhttp.send();
+        }
         $('#create-form').submit(function(e) {
           e.preventDefault();
           const fname = $('#fname').val();
@@ -52,8 +105,27 @@
             url: '/users',
             type: 'POST',
             dataType: 'json',
-            data: JSON.stringify({ fname, lname, ysalary })
+            data: JSON.stringify({ fname, lname, ysalary }),
+            success: alert('Added ' + fname + ' ' + lname + ' with salary ' + ysalary)
           });
+          loadUsers();
+        })
+
+        function myFunction(arr) {
+            var out = "";
+            var i;
+            for(i = 0; i < arr.length; i++) {
+                out += "<tr><td><a href='/users/" + arr[i].id + "'>" + arr[i].id
+                + "</a></td><td>" + arr[i].fname + "</td><td>"
+                + arr[i].lname + "</td><td>" + arr[i].ysalary + "</td></tr>";
+            }
+            out += '</tbody></table>'
+            document.getElementById("tbody").innerHTML = out;
+        }
+
+        $('#load-users').click(function(e) {
+          e.preventDefault();
+          loadUsers();
         })
       </script>
   </body>
